@@ -103,5 +103,10 @@ main a:is(:focus, :hover) {
   text-decoration-color: var(--text-color-focus);
 }
 
+.header-link {
+  text-decoration: none; 
+  color: inherit;
+}
+
 @media(max-width: 50em) {
 }
