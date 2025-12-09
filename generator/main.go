@@ -24,6 +24,7 @@ type article struct {
 	date time.Time
 	content string
 	url string
+	path string
 }
 
 var articles []article
@@ -172,6 +173,7 @@ func handleHtmlFile(path string) error {
 			content: html,
 			url: convertArticlePathToUrl(path),
 			date: releaseDate,
+			path: path,
 		}
 		articles = append(articles, art)
 	}
@@ -223,6 +225,16 @@ func contentFileHandler(path string, entry fs.DirEntry, err error) error {
 	return handleNormalFile(path)
 }
 
+func getArticleDirectoryBasedOnIndex(complete_path string, dir string) string {
+	parts := strings.Split(complete_path, dir)
+	result := parts[len(parts)-1]
+	result = dir + result
+
+	result = strings.TrimSuffix(result, "index.html")
+
+	return result
+}
+
 func generateHomePage() error {
 	sort.Slice(articles, func(i, j int) bool {
 		return articles[i].date.After(articles[j].date)
@@ -240,6 +252,12 @@ func generateHomePage() error {
 			h1.SetHtml(fmt.Sprintf(`<a class="article-title-link" href="%s">%s</a>`, a.url, titleText))
 		})
 
+		doc.Find("pre").Each(func(i int, s *goquery.Selection) {
+			current := s.AttrOr("data-src", "")
+			newValue := getArticleDirectoryBasedOnIndex(a.path, "articles") + current
+			s.SetAttr("data-src", newValue)
+		})
+
 		modifiedHTML, err := doc.Html()
 		if err != nil {
 			panic(err)
@@ -250,6 +268,8 @@ func generateHomePage() error {
 			modifiedHTML,
 		))
 		previews.WriteString("\n")	
+
+		fmt.Println(a.path)
 	}
 
 	tmplFile, err := os.Open(templatePath())
